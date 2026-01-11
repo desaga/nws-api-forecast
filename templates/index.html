@@ -153,6 +153,11 @@
     });
 
     function setLocation(lat, lon) {
+        // Normalize longitude
+        if (lon < -180 || lon > 180) {
+            lon = ((lon + 180) % 360 + 360) % 360 - 180;
+        }
+
         document.getElementById('lat').value = lat.toFixed(6);
         document.getElementById('lon').value = lon.toFixed(6);
 
