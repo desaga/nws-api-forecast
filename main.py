@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import requests
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -94,6 +95,13 @@ def get_forecast_open_meteo(lat, lon):
         print(f"Open-Meteo error: {e}")
         return None
 
+def format_date_label(date_str):
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        return dt.strftime("%a, %b %d")
+    except Exception:
+        return date_str
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     forecast = None
@@ -124,7 +132,7 @@ def index():
                 location_name = reverse_geocode(lat, lon)
 
                 try:
-                    # First try NWS (only works in US)
+                    # Try NWS (only US)
                     point_url = f"https://api.weather.gov/points/{lat},{lon}"
                     point_resp = requests.get(point_url, headers=NWS_HEADERS)
                     point_resp.raise_for_status()
@@ -137,16 +145,19 @@ def index():
 
                 except Exception as nws_error:
                     print(f"NWS failed, switching to Open-Meteo: {nws_error}")
-                    # Fallback to Open-Meteo
+                    # Fallback: Open-Meteo
                     daily_data = get_forecast_open_meteo(lat, lon)
                     if daily_data:
                         forecast = []
                         for i in range(len(daily_data["time"])):
                             forecast.append({
-                                "name": daily_data["time"][i],
+                                "name": format_date_label(daily_data["time"][i]),
                                 "temperature": f"{daily_data['temperature_2m_max'][i]}° / {daily_data['temperature_2m_min'][i]}°",
                                 "temperatureUnit": "C",
-                                "detailedForecast": WEATHER_CODES.get(daily_data['weathercode'][i], f"Code {daily_data['weathercode'][i]}"),
+                                "detailedForecast": WEATHER_CODES.get(
+                                    daily_data['weathercode'][i],
+                                    f"Code {daily_data['weathercode'][i]}"
+                                ),
                                 "windSpeed": f"{daily_data['wind_speed_10m_max'][i]} km/h",
                                 "windDirection": f"{daily_data['wind_direction_10m_dominant'][i]}°",
                             })
