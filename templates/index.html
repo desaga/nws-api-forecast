@@ -29,6 +29,11 @@
         .input-group-text {
             min-width: 90px;
         }
+
+        .form-control::placeholder {
+            color: #999;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -46,20 +51,17 @@
 
         <!-- City -->
         <div class="col">
-          <label for="city" class="form-label mb-1">City</label>
-          <input type="text" class="form-control" id="city" name="city" placeholder="e.g. New York">
+          <input type="text" class="form-control" id="city" name="city" placeholder="City - e.g. New York">
         </div>
 
         <!-- Latitude -->
         <div class="col">
-          <label for="lat" class="form-label mb-1">Lat</label>
-          <input type="text" class="form-control" id="lat" name="lat" placeholder="48.13" inputmode="decimal">
+          <input type="text" class="form-control" id="lat" name="lat" placeholder="Latitude - e.g. 48.13" inputmode="decimal">
         </div>
 
         <!-- Longitude -->
         <div class="col">
-          <label for="lon" class="form-label mb-1">Lon</label>
-          <input type="text" class="form-control" id="lon" name="lon" placeholder="33.66" inputmode="decimal">
+          <input type="text" class="form-control" id="lon" name="lon" placeholder="Longitude - e.g. 33.66" inputmode="decimal">
         </div>
 
         <!-- Submit -->
@@ -196,9 +198,40 @@
     }
 
     map.on('click', function (e) {
-        setLocation(e.latlng.lat, e.latlng.lng);
-        reverseGeocode(e.latlng.lat, e.latlng.lng);
-        submitForecastForm();
+        const lat = e.latlng.lat;
+        const lon = e.latlng.lng;
+        
+        // Update marker without updating input fields
+        const latLng = [lat, lon];
+        if (marker) {
+            marker.setLatLng(latLng);
+        } else {
+            marker = L.marker(latLng).addTo(map);
+        }
+        map.setView(latLng, 10);
+        
+        reverseGeocode(lat, lon);
+        
+        // Submit form with clicked coordinates without updating visible input fields
+        const form = document.querySelector("form");
+        const formData = new FormData(form);
+        formData.set('lat', lat.toFixed(6));
+        formData.set('lon', lon.toFixed(6));
+        formData.delete('city'); // Clear city if it was set
+        
+        // Create a temporary form to submit
+        const tempForm = document.createElement('form');
+        tempForm.method = 'POST';
+        tempForm.style.display = 'none';
+        for (const [key, value] of formData.entries()) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            tempForm.appendChild(input);
+        }
+        document.body.appendChild(tempForm);
+        tempForm.submit();
     });
 
     function setLocation(lat, lon) {
