@@ -18,19 +18,27 @@ WEATHER_CODES = {
     51: "Light drizzle",
     53: "Moderate drizzle",
     55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
     61: "Slight rain",
     63: "Moderate rain",
     65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
     71: "Slight snow fall",
     73: "Moderate snow fall",
     75: "Heavy snow fall",
-    80: "Rain showers",
-    81: "Heavy rain showers",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
     82: "Violent rain showers",
-    95: "Thunderstorm",
-    96: "Thunderstorm with hail",
-    99: "Heavy thunderstorm with hail",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm (slight or moderate)",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail"
 }
+
 
 def geocode_city(city_name):
     try:
@@ -52,6 +60,7 @@ def geocode_city(city_name):
     except Exception:
         return None, None
 
+
 def reverse_geocode(lat, lon):
     try:
         url = "https://nominatim.openstreetmap.org/reverse"
@@ -70,7 +79,8 @@ def reverse_geocode(lat, lon):
         data = response.json()
         if "address" in data:
             address = data["address"]
-            city = address.get("city") or address.get("town") or address.get("village") or address.get("hamlet")
+            city = address.get("city") or address.get("town") or address.get(
+                "village") or address.get("hamlet")
             state = address.get("state")
             country = address.get("country")
             location = ", ".join(filter(None, [city, state, country]))
@@ -78,6 +88,7 @@ def reverse_geocode(lat, lon):
         return "Unknown location"
     except Exception:
         return "Unknown location"
+
 
 def get_forecast_open_meteo(lat, lon):
     try:
@@ -95,12 +106,14 @@ def get_forecast_open_meteo(lat, lon):
         print(f"Open-Meteo error: {e}")
         return None
 
+
 def format_date_label(date_str):
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         return dt.strftime("%a, %b %d")
     except Exception:
         return date_str
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -138,7 +151,8 @@ def index():
                     point_resp.raise_for_status()
 
                     forecast_url = point_resp.json()["properties"]["forecast"]
-                    forecast_resp = requests.get(forecast_url, headers=NWS_HEADERS)
+                    forecast_resp = requests.get(forecast_url,
+                                                 headers=NWS_HEADERS)
                     forecast_resp.raise_for_status()
 
                     forecast = forecast_resp.json()["properties"]["periods"]
@@ -154,7 +168,8 @@ def index():
                                 daily_data["surface_pressure_mean"][
                                     i] * 0.75006)
                             forecast.append({
-                                "name": format_date_label(daily_data["time"][i]),
+                                "name": format_date_label(
+                                    daily_data["time"][i]),
                                 "temperature": f"{daily_data['temperature_2m_max'][i]}° / {daily_data['temperature_2m_min'][i]}°",
                                 "temperatureUnit": "C",
                                 "detailedForecast": WEATHER_CODES.get(
@@ -173,6 +188,7 @@ def index():
 
     return render_template("index.html", forecast=forecast, error=error,
                            lat=lat, lon=lon, location_name=location_name)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
