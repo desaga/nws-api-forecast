@@ -85,7 +85,7 @@ def get_forecast_open_meteo(lat, lon):
         params = {
             "latitude": lat,
             "longitude": lon,
-            "daily": "temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,wind_direction_10m_dominant",
+            "daily": "temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,wind_direction_10m_dominant,surface_pressure_mean",
             "timezone": "auto"
         }
         response = requests.get(url, params=params)
@@ -150,6 +150,9 @@ def index():
                     if daily_data:
                         forecast = []
                         for i in range(len(daily_data["time"])):
+                            pressure_mmHg = round(
+                                daily_data["surface_pressure_mean"][
+                                    i] * 0.75006)
                             forecast.append({
                                 "name": format_date_label(daily_data["time"][i]),
                                 "temperature": f"{daily_data['temperature_2m_max'][i]}° / {daily_data['temperature_2m_min'][i]}°",
@@ -160,6 +163,7 @@ def index():
                                 ),
                                 "windSpeed": f"{daily_data['wind_speed_10m_max'][i]} km/h",
                                 "windDirection": f"{daily_data['wind_direction_10m_dominant'][i]}°",
+                                "pressure": f"{pressure_mmHg} mmHg"
                             })
                     else:
                         error = "Could not get forecast from any source."

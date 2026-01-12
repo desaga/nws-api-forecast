@@ -103,6 +103,7 @@
                 <tr>
                     <th>Period</th>
                     <th>Temperature</th>
+                    <th>Pressure</th>
                     <th>Wind</th>
                     <th>Description</th>
                 </tr>
@@ -118,6 +119,7 @@
                                 {{ period.temperature }}°{{ period.temperatureUnit }}
                             {% endif %}
                         </td>
+                        <td>{{ period.pressure }}</td>
                         <td>{{ period.windDirection }} {{ period.windSpeed }}</td>
                         <td>{{ period.detailedForecast or period.description }}</td>
                     </tr>
