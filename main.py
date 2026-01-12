@@ -4,10 +4,6 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-NWS_HEADERS = {
-    "User-Agent": "myweatherapp.com, contact@myweatherapp.com"
-}
-
 WEATHER_CODES = {
     0: "Clear sky",
     1: "Mainly clear",
@@ -148,51 +144,34 @@ def index():
             try:
                 location_name = reverse_geocode(lat, lon)
 
-                try:
-                    # Try NWS (only US)
-                    point_url = f"https://api.weather.gov/points/{lat},{lon}"
-                    point_resp = requests.get(point_url, headers=NWS_HEADERS)
-                    point_resp.raise_for_status()
-
-                    forecast_url = point_resp.json()["properties"]["forecast"]
-                    forecast_resp = requests.get(forecast_url,
-                                                 headers=NWS_HEADERS)
-                    forecast_resp.raise_for_status()
+                # Get forecast from Open-Meteo
+                daily_data = get_forecast_open_meteo(lat, lon)
+                if daily_data:
                     source = {
-                        "name": "National Weather Service (USA)",
-                        "url": "https://www.weather.gov/"
+                        "name": "Open-Meteo",
+                        "url": "https://open-meteo.com/"
                     }
-                    forecast = forecast_resp.json()["properties"]["periods"]
-
-                except Exception as nws_error:
-                    print(f"NWS failed, switching to Open-Meteo: {nws_error}")
-                    # Fallback: Open-Meteo
-                    daily_data = get_forecast_open_meteo(lat, lon)
-                    if daily_data:
-                        source = {
-                            "name": "Open-Meteo",
-                            "url": "https://open-meteo.com/"
-                        }
-                        forecast = []
-                        for i in range(len(daily_data["time"])):
-                            pressure_mmHg = round(
-                                daily_data["surface_pressure_mean"][
-                                    i] * 0.75006)
-                            forecast.append({
-                                "name": format_date_label(
-                                    daily_data["time"][i]),
-                                "temperature": f"{daily_data['temperature_2m_max'][i]}° / {daily_data['temperature_2m_min'][i]}°",
-                                "temperatureUnit": "C",
-                                "detailedForecast": WEATHER_CODES.get(
-                                    daily_data['weathercode'][i],
-                                    f"Code {daily_data['weathercode'][i]}"
-                                ),
-                                "windSpeed": f"{daily_data['wind_speed_10m_max'][i]} km/h",
-                                "windDirection": f"{daily_data['wind_direction_10m_dominant'][i]}°",
-                                "pressure": f"{pressure_mmHg} mmHg"
-                            })
-                    else:
-                        error = "Could not get forecast from any source."
+                    forecast = []
+                    for i in range(len(daily_data["time"])):
+                        pressure_mmHg = round(
+                            daily_data["surface_pressure_mean"][
+                                i] * 0.75006)
+                        forecast.append({
+                            "name": format_date_label(
+                                daily_data["time"][i]),
+                            "temperatureMax": daily_data['temperature_2m_max'][i],
+                            "temperatureMin": daily_data['temperature_2m_min'][i],
+                            "temperatureUnit": "C",
+                            "detailedForecast": WEATHER_CODES.get(
+                                daily_data['weathercode'][i],
+                                f"Code {daily_data['weathercode'][i]}"
+                            ),
+                            "windSpeed": f"{daily_data['wind_speed_10m_max'][i]} km/h",
+                            "windDirection": f"{daily_data['wind_direction_10m_dominant'][i]}°",
+                            "pressure": f"{pressure_mmHg} mmHg"
+                        })
+                else:
+                    error = "Could not get forecast from Open-Meteo."
 
             except Exception as e:
                 error = f"Unexpected error: {str(e)}"
