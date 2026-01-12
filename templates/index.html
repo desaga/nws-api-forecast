@@ -248,6 +248,8 @@
     document.getElementById('city').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
+            showLoading('Loading forecast...');
+            sessionStorage.setItem('forecastRequested', 'true');
             form.submit();
         }
     });
