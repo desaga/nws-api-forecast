@@ -154,7 +154,10 @@ def index():
                     forecast_resp = requests.get(forecast_url,
                                                  headers=NWS_HEADERS)
                     forecast_resp.raise_for_status()
-
+                    source = {
+                        "name": "National Weather Service (USA)",
+                        "url": "https://www.weather.gov/"
+                    }
                     forecast = forecast_resp.json()["properties"]["periods"]
 
                 except Exception as nws_error:
@@ -167,6 +170,10 @@ def index():
                             pressure_mmHg = round(
                                 daily_data["surface_pressure_mean"][
                                     i] * 0.75006)
+                            source = {
+                                "name": "Open-Meteo",
+                                "url": "https://open-meteo.com/"
+                            }
                             forecast.append({
                                 "name": format_date_label(
                                     daily_data["time"][i]),
@@ -187,7 +194,7 @@ def index():
                 error = f"Unexpected error: {str(e)}"
 
     return render_template("index.html", forecast=forecast, error=error,
-                           lat=lat, lon=lon, location_name=location_name)
+                           lat=lat, lon=lon, location_name=location_name, source=source)
 
 
 if __name__ == "__main__":

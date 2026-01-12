@@ -1,5 +1,6 @@
 # nws-api-forecast
 # 🌤️ Weather Forecast App (USA, NWS API)
+### https://open-meteo.com/en/docs
 
 A simple Flask-based web application that provides a 7-day weather forecast using the [National Weather Service API](https://www.weather.gov/documentation/services-web-api).  
 Users can get forecasts by:
