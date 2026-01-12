@@ -111,13 +111,19 @@
         {% endif %}
 
         <div class="table-responsive">
+            {% set has_pressure = forecast | selectattr('pressure') | list | length > 0 %}
+            {% set has_wind = forecast | selectattr('windSpeed') | list | length > 0 %}
             <table class="table table-bordered table-hover">
                 <thead class="table-light">
                 <tr>
                     <th>Period</th>
                     <th>Temperature</th>
+                    {% if has_pressure %}
                     <th>Pressure</th>
+                    {% endif %}
+                    {% if has_wind %}
                     <th>Wind</th>
+                    {% endif %}
                     <th>Description</th>
                 </tr>
                 </thead>
@@ -132,8 +138,22 @@
                                 {{ period.temperature }}°{{ period.temperatureUnit }}
                             {% endif %}
                         </td>
-                        <td>{{ period.pressure }}</td>
-                        <td>{{ period.windDirection }} {{ period.windSpeed }}</td>
+                        {% if has_pressure %}
+                        <td>{{ period.pressure or '-' }}</td>
+                        {% endif %}
+                        {% if has_wind %}
+                        <td>
+                            {% if period.windDirection and period.windSpeed %}
+                                {{ period.windDirection }} {{ period.windSpeed }}
+                            {% elif period.windSpeed %}
+                                {{ period.windSpeed }}
+                            {% elif period.windDirection %}
+                                {{ period.windDirection }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        {% endif %}
                         <td>{{ period.detailedForecast or period.description }}</td>
                     </tr>
                 {% endfor %}
