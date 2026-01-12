@@ -41,6 +41,37 @@
             max-width: 64px;
             height: auto;
         }
+
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loading-overlay.show {
+            display: flex;
+        }
+
+        #loading-overlay .spinner-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #loading-overlay .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3rem;
+        }
     </style>
 </head>
 <body>
@@ -77,12 +108,9 @@
         </div>
       </div>
 
-      <!-- Spinner + Location status -->
+      <!-- Location status -->
       <div class="row mt-2">
-        <div class="col-auto d-flex align-items-center gap-2">
-          <div id="spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;">
-            <span class="visually-hidden">Loading...</span>
-          </div>
+        <div class="col-auto">
           <span id="loc-status" class="text-muted"></span>
         </div>
       </div>
@@ -111,7 +139,7 @@
         </a>
 
         {% if source %}
-            <p class="text-muted mt-3">
+            <p id="forecast-source" class="text-muted mt-3">
                 Forecast source:
                 <a href="{{ source.url }}" target="_blank" rel="noopener">
                     {{ source.name }}
@@ -177,6 +205,16 @@
     {% endif %}
 </div>
 
+<!-- Loading Overlay Modal -->
+<div id="loading-overlay">
+    <div class="spinner-container">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 mb-0" id="loading-message">Loading forecast...</p>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -185,11 +223,32 @@
     // Use My Location
     document.getElementById('loc-btn').addEventListener('click', useMyLocation);
 
+    // Show loading overlay on form submission
+    const form = document.querySelector("form");
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingMessage = document.getElementById('loading-message');
+    const locStatus = document.getElementById('loc-status');
+    
+    function showLoading(message = 'Loading forecast...') {
+        loadingMessage.textContent = message;
+        loadingOverlay.classList.add('show');
+    }
+    
+    function hideLoading() {
+        loadingOverlay.classList.remove('show');
+    }
+    
+    form.addEventListener('submit', function() {
+        showLoading('Loading forecast...');
+        // Set flag to indicate forecast request was submitted
+        sessionStorage.setItem('forecastRequested', 'true');
+    });
+
     // Auto-submit on Enter in city input
     document.getElementById('city').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            document.querySelector("form").submit();
+            form.submit();
         }
     });
 
@@ -223,6 +282,11 @@
         map.setView(latLng, 10);
         
         reverseGeocode(lat, lon);
+        
+        // Show loading overlay
+        showLoading('Loading forecast...');
+        // Set flag to indicate forecast request was submitted
+        sessionStorage.setItem('forecastRequested', 'true');
         
         // Submit form with clicked coordinates without updating visible input fields
         const form = document.querySelector("form");
@@ -281,11 +345,10 @@
     function useMyLocation() {
         const status = document.getElementById('loc-status');
         const button = document.getElementById('loc-btn');
-        const spinner = document.getElementById('spinner');
 
         status.textContent = 'Detecting location...';
         button.disabled = true;
-        spinner.style.display = 'inline-block';
+        showLoading('Detecting your location...');
 
         navigator.geolocation.getCurrentPosition(
             pos => {
@@ -294,13 +357,12 @@
                 setLocation(lat, lon);
                 reverseGeocode(lat, lon);
                 status.textContent = '✔ Location found!';
-                spinner.style.display = 'none';
                 button.disabled = false;
                 submitForecastForm();
             },
             () => {
                 status.textContent = 'Unable to get location.';
-                spinner.style.display = 'none';
+                hideLoading();
                 button.disabled = false;
             }
         );
@@ -309,6 +371,22 @@
     function submitForecastForm() {
         document.querySelector("form").submit();
     }
+
+    // Scroll to forecast source once forecast request has completed
+    window.addEventListener('load', function() {
+        // Check if we just completed a forecast request
+        const forecastRequested = sessionStorage.getItem('forecastRequested');
+        const forecastSource = document.getElementById('forecast-source');
+        
+        if (forecastRequested === 'true' && forecastSource) {
+            // Clear the flag
+            sessionStorage.removeItem('forecastRequested');
+            // Scroll to forecast source after a short delay to ensure page is fully rendered
+            setTimeout(function() {
+                forecastSource.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    });
 </script>
 <footer class="text-center text-muted small mt-5 mb-3">
     &copy; 2026 <a href="https://github.com/desaga/nws-api-forecast" target="_blank" class="text-decoration-none text-muted">Viktor Kuznietsov</a>. All rights reserved.
