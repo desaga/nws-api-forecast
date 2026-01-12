@@ -121,6 +121,7 @@ def index():
     error = None
     location_name = None
     lat = lon = ""
+    source = None
 
     if request.method == "POST":
         city = request.form.get("city")
@@ -165,15 +166,15 @@ def index():
                     # Fallback: Open-Meteo
                     daily_data = get_forecast_open_meteo(lat, lon)
                     if daily_data:
+                        source = {
+                            "name": "Open-Meteo",
+                            "url": "https://open-meteo.com/"
+                        }
                         forecast = []
                         for i in range(len(daily_data["time"])):
                             pressure_mmHg = round(
                                 daily_data["surface_pressure_mean"][
                                     i] * 0.75006)
-                            source = {
-                                "name": "Open-Meteo",
-                                "url": "https://open-meteo.com/"
-                            }
                             forecast.append({
                                 "name": format_date_label(
                                     daily_data["time"][i]),
