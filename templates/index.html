@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <style>
         #map {
@@ -65,6 +67,32 @@
             height: 3rem;
             border-width: 0.3rem;
         }
+<style>
+        table {
+            table-layout: auto !important;
+            width: 100%;
+        }
+
+        th, td {
+            white-space: nowrap;
+            vertical-align: middle;
+            padding: 0.5rem;
+        }
+
+        td img {
+            max-width: 40px;
+            height: auto;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 0.3rem;
+        }
+
+        td span {
+            vertical-align: middle;
+        }
+        td {
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -72,128 +100,140 @@
     <h1 class="mb-4 text-center">Weather Forecast</h1>
 
     <form method="POST" class="mb-3">
-      <div class="row row-cols-1 row-cols-md-auto g-2 align-items-end">
-        <!-- Use My Location -->
-        <div class="col">
-          <button type="button" id="loc-btn" class="btn btn-outline-secondary w-100">
-            📍 Use My Location
-          </button>
+        <div class="row row-cols-1 row-cols-md-auto g-2 align-items-end">
+            <!-- Use My Location -->
+            <div class="col">
+                <button type="button" id="loc-btn"
+                        class="btn btn-outline-secondary w-100">
+                    📍 Use My Location
+                </button>
+            </div>
+
+            <!-- City -->
+            <div class="col">
+                <input type="text" class="form-control" id="city" name="city"
+                       placeholder="City - e.g. New York">
+            </div>
+
+            <!-- Latitude -->
+            <div class="col">
+                <input type="text" class="form-control" id="lat" name="lat"
+                       placeholder="Latitude - e.g. 48.13" inputmode="decimal">
+            </div>
+
+            <!-- Longitude -->
+            <div class="col">
+                <input type="text" class="form-control" id="lon" name="lon"
+                       placeholder="Longitude - e.g. 33.66"
+                       inputmode="decimal">
+            </div>
+
+            <!-- Submit -->
+            <div class="col">
+                <button type="submit" class="btn btn-primary w-100">Get
+                    Forecast
+                </button>
+            </div>
         </div>
 
-        <!-- City -->
-        <div class="col">
-          <input type="text" class="form-control" id="city" name="city" placeholder="City - e.g. New York">
+        <!-- Location status -->
+        <div class="row mt-2">
+            <div class="col-auto">
+                <span id="loc-status" class="text-muted"></span>
+            </div>
         </div>
 
-        <!-- Latitude -->
-        <div class="col">
-          <input type="text" class="form-control" id="lat" name="lat" placeholder="Latitude - e.g. 48.13" inputmode="decimal">
-        </div>
+        <!-- Reverse geocoded location -->
+        <p id="reverse-address" class="mt-2 fw-medium"></p>
 
-        <!-- Longitude -->
-        <div class="col">
-          <input type="text" class="form-control" id="lon" name="lon" placeholder="Longitude - e.g. 33.66" inputmode="decimal">
-        </div>
-
-        <!-- Submit -->
-        <div class="col">
-          <button type="submit" class="btn btn-primary w-100">Get Forecast</button>
-        </div>
-      </div>
-
-      <!-- Location status -->
-      <div class="row mt-2">
-        <div class="col-auto">
-          <span id="loc-status" class="text-muted"></span>
-        </div>
-      </div>
-
-      <!-- Reverse geocoded location -->
-      <p id="reverse-address" class="mt-2 fw-medium"></p>
-
-      <!-- Map -->
-      <div id="map" class="my-3 rounded border"></div>
+        <!-- Map -->
+        <div id="map" class="my-3 rounded border"></div>
     </form>
 
 
-
     {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
+    <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
 
     {% if forecast %}
-        <h2 class="mb-3">7-Day Forecast</h2>
-        <p><strong>Coordinates:</strong> {{ lat }}, {{ lon }}</p>
-        <p><strong>Location:</strong> {{ location_name }}</p>
-        <a href="https://www.google.com/maps?q={{ lat }},{{ lon }}"
-           class="btn btn-outline-primary btn-sm mt-2"
-           target="_blank">
-            📍 View on map
+    <h2 class="mb-3">7-Day Forecast</h2>
+    <p><strong>Coordinates:</strong> {{ lat }}, {{ lon }}</p>
+    <p><strong>Location:</strong> {{ location_name }}</p>
+    <a href="https://www.google.com/maps?q={{ lat }},{{ lon }}"
+       class="btn btn-outline-primary btn-sm mt-2"
+       target="_blank">
+        📍 View on map
+    </a>
+
+    {% if source %}
+    <p id="forecast-source" class="text-muted mt-3">
+        Forecast source:
+        <a href="{{ source.url }}" target="_blank" rel="noopener">
+            {{ source.name }}
         </a>
+    </p>
+    {% endif %}
 
-        {% if source %}
-            <p id="forecast-source" class="text-muted mt-3">
-                Forecast source:
-                <a href="{{ source.url }}" target="_blank" rel="noopener">
-                    {{ source.name }}
-                </a>
-            </p>
-        {% endif %}
-
-        <div class="table-responsive">
-            {% set has_pressure = forecast | selectattr('pressure') | list | length > 0 %}
-            {% set has_wind = forecast | selectattr('windSpeed') | list | length > 0 %}
-            <table class="table table-bordered table-hover">
-                <thead class="table-light">
-                <tr>
-                    <th>Period</th>
-                    <th>Temperature</th>
-                    {% if has_pressure %}
-                    <th>Pressure</th>
+    <div class="table-responsive">
+        {% set has_pressure = forecast | selectattr('pressure') | list | length
+        > 0 %}
+        {% set has_wind = forecast | selectattr('windSpeed') | list | length >
+        0 %}
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+            <tr>
+                <th>Period</th>
+                <th>Temperature</th>
+                {% if has_pressure %}
+                <th>Pressure</th>
+                {% endif %}
+                {% if has_wind %}
+                <th>Wind</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for period in forecast %}
+            <tr>
+                <td>
+                    <strong>{{ period.name }}</strong>
+                    <br>
+                    <img src="{{ url_for('static', filename='img/' ~ period.detailedForecastCode ~ '.png') }}"
+                         alt="{{ period.detailedForecast }}"
+                         width="80" height="80">
+                    <span>{{ period.detailedForecast or period.description }}</span>
+                </td>
+                <td>
+                    {% if period.temperatureMax is defined and
+                    period.temperatureMin is defined %}
+                    <span>☀️ {{ period.temperatureMax }}° / 🌙 {{ period.temperatureMin }}°</span>
+                    {% elif period.temperature is string %}
+                    {{ period.temperature }}
+                    {% else %}
+                    {{ period.temperature }}°{{ period.temperatureUnit }}
                     {% endif %}
-                    {% if has_wind %}
-                    <th>Wind</th>
+                </td>
+                {% if has_pressure %}
+                <td>{{ period.pressure or '-' }}</td>
+                {% endif %}
+                {% if has_wind %}
+                <td>
+                    {% if period.windDirection and period.windSpeed %}
+                    {{ period.windDirection }} {{ period.windSpeed }}
+                    {% elif period.windSpeed %}
+                    {{ period.windSpeed }}
+                    {% elif period.windDirection %}
+                    {{ period.windDirection }}
+                    {% else %}
+                    -
                     {% endif %}
-                    <th>Description</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for period in forecast %}
-                    <tr>
-                        <td>
-                            <strong>{{ period.name }}</strong>
-                        </td>
-                        <td>
-                            {% if period.temperatureMax is defined and period.temperatureMin is defined %}
-                                <span>☀️ {{ period.temperatureMax }}° / 🌙 {{ period.temperatureMin }}°</span>
-                            {% elif period.temperature is string %}
-                                {{ period.temperature }}
-                            {% else %}
-                                {{ period.temperature }}°{{ period.temperatureUnit }}
-                            {% endif %}
-                        </td>
-                        {% if has_pressure %}
-                        <td>{{ period.pressure or '-' }}</td>
-                        {% endif %}
-                        {% if has_wind %}
-                        <td>
-                            {% if period.windDirection and period.windSpeed %}
-                                {{ period.windDirection }} {{ period.windSpeed }}
-                            {% elif period.windSpeed %}
-                                {{ period.windSpeed }}
-                            {% elif period.windDirection %}
-                                {{ period.windDirection }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        {% endif %}
-                        <td>{{ period.detailedForecast or period.description }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 </div>
 
@@ -383,7 +423,9 @@
     });
 </script>
 <footer class="text-center text-muted small mt-5 mb-3">
-    &copy; 2026 <a href="https://github.com/desaga/nws-api-forecast" target="_blank" class="text-decoration-none text-muted">Viktor Kuznietsov</a>. All rights reserved.
+    &copy; 2026 <a href="https://github.com/desaga/nws-api-forecast"
+                   target="_blank" class="text-decoration-none text-muted">Viktor
+    Kuznietsov</a>. All rights reserved.
 </footer>
 
 </body>

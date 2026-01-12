@@ -166,6 +166,8 @@ def index():
                                 daily_data['weathercode'][i],
                                 f"Code {daily_data['weathercode'][i]}"
                             ),
+                            "detailedForecastCode": daily_data['weathercode'][
+                                i],
                             "windSpeed": f"{daily_data['wind_speed_10m_max'][i]} km/h",
                             "windDirection": f"{daily_data['wind_direction_10m_dominant'][i]}°",
                             "pressure": f"{pressure_mmHg} mmHg"
