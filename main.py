@@ -39,6 +39,8 @@ WEATHER_CODES = {
     99: "Thunderstorm with heavy hail"
 }
 
+def normalize_longitude(lon):
+    return ((lon + 180) % 360 + 360) % 360 - 180
 
 def geocode_city(city_name):
     try:
@@ -136,6 +138,7 @@ def index():
             try:
                 lat = float(lat)
                 lon = float(lon)
+                lon = normalize_longitude(lon)
             except ValueError:
                 error = "Invalid coordinates provided."
         else:
